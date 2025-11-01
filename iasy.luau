@@ -12,7 +12,7 @@
 	NB: this does not return InputBindings, only {[string]: Enum.KeyCode} (same as schema)
 	
 	iasy.set_binding_schema_for_action(sprint_action, sprint_bindings) -- apply the "new" bindings
-	iasy.set_binding_for_action(sprint_action, "keyboard", Enum.KeyCode.B) -- set the binding for keyboard to B. set to Enum.KeyCode.Unknown to disable it.
+	iasy.set_binding_for_action(sprint_action, "keyboard", Enum.KeyCode.B) -- set the binding for keyboard to B.
 	Returns the InputBinding for further property changes if necessary.
 	
 	iasy.set_action_ui_button(sprint_action, ui_button, true) -- set the ui button for the action. 
@@ -30,8 +30,8 @@ local function _create_action(schema: action_schema): InputAction local a = Inst
 local schema = {
 	-- contexts - must have at least 1 action in them
 	core = {
-		-- actions - use Enum.KeyCode.Unknown if you wish to leave a binding blank. You can also leave bindings entirely empty.
-		-- no binding can be named "mobile", though you can get it yourself with set_binding_for_action.
+		-- actions - you can leave bindings entirely empty.
+		-- no binding may be named "mobile", though you can get it yourself with set_binding_for_action.
 		sprint = _create_action {
 			type = Enum.InputActionType.Bool,
 			bindings = {keyboard = Enum.KeyCode.LeftShift, gamepad = Enum.KeyCode.ButtonR2}
@@ -40,7 +40,7 @@ local schema = {
 			type =  Enum.InputActionType.ViewportPosition,
 			bindings = {}
 		}
-	},
+	}
 }
 
 local user_input_service = game:GetService("UserInputService")
