@@ -34,7 +34,7 @@ local ui_button = path.to.ui.button
 local sprint_action = iasy.schema.core.sprint -- this is all autocompleted!
 sprint_action.Pressed:Connect(function() print("client is sprinting!") end)
 
-iasy.set_action_ui_button(sprint_action, ui_button, true)
+iasy.set_action_ui_button(sprint_action, ui_button, true) -- last parameter is for automatically hiding/showing the button on touchscreens
 
 task.wait(5); print("disabled keyboard sprint")
 local sprint_bindings = iasy.get_binding_schema_for_action(sprint_action) -- NB: this is a fresh table and is not deep-frozen like schema is.
