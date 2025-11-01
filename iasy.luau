@@ -135,8 +135,9 @@ return {
 
 	get_context = get_context,
 
-	-- these are supposed to be private but might as well return them for easier mutability of the schema
+	-- these are supposed to be private but might as well return them for easier addition of IAS objects
 	_create_binding = _create_binding,
 	_create_action = _create_action,
 	_create_context = _create_context
 }
+
