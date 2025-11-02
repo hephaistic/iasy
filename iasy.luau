@@ -43,6 +43,7 @@
 
 -- you can just set this to {[string]: Enum.KeyCode} if you think your binding_names will be inconsistent
 -- otherwise, hint each known binding_name as "Enum.KeyCode?"
+-- NB: certain functions expect this binding schema! See above for which ones cannot be used if you set a custom one.
 export type binding_schema = {keyboard: Enum.KeyCode?, gamepad: Enum.KeyCode?, mobile: Enum.KeyCode?}
 
 -- can be set to string for the same reasons as above; using new type solver, you could do keyof<binding_schema>
@@ -224,3 +225,4 @@ return {
 	_create_action = _create_action,
 	_create_context = _create_context
 }
+
