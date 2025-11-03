@@ -1,49 +1,54 @@
 --!strict
 --!native
---!optimize 2
 
 --[[
-	API:
-	local schema = iasy.schema 
-    Gets the schema. It is frozen (immutable)
-	
-	local core = iasy.get_context(schema.core)
-    Gets an InputContext generated from the schema. It is also frozen
+	SCROLL DOWN TO LINE 59 TO SET YOUR SCHEMA.
+	iasy - a thin, performant IAS wrapper with good intellisense and some utilities.
+	This entire module is designed with a focus on developer experience.
 
-	local sprint_action = core.sprint
+	API:
+	> local schema = iasy.schema 
+    Gets the schema. It is deeply-frozen (immutable)
+	
+	> local core = iasy.get_context(schema.core)
+    Gets an InputContext generated from the schema
+
+	> local sprint_action = core.sprint
     Gets the InputAction generated from the the schema
 
-	local sprint_bindings = iasy.get_binding_schema_for_action(sprint_action)
-    Get a fresh (unfrozen) table of bindings for an action
+	> local sprint_bindings = iasy.get_binding_schema_for_action(sprint_action)
+    Get a fresh (unfrozen) table of bindings for an action. Computed via :GetChildren().
 	NB: Does not return InputBindings, only {[binding_name]: Enum.KeyCode} (same as schema). Call sprint_action:GetChildren()
 	
     You can modify this returned schema (with intellisense on binding_name) and pass it into the below, for example.
 
-	iasy.set_binding_schema_for_action(sprint_action, sprint_bindings)
-    Clear all previous bindings and add these new bindings
+	> iasy.set_binding_schema_for_action(sprint_action, sprint_bindings)
+    Clear all previous bindings (except the internal mobile binding) and add these new bindings
 	
-    iasy.set_binding_for_action(sprint_action, "keyboard", Enum.KeyCode.B)
+    > iasy.set_binding_for_action(sprint_action, "keyboard", Enum.KeyCode.B)
 	Returns the InputBinding for further property changes if necessary
 
-    iasy.get_keycode_for_binding(sprint_action, "keyboard") --> Enum.KeyCode.B
+    > iasy.get_keycode_for_binding(sprint_action, "keyboard") --> Enum.KeyCode.B
     Returns the Enum.KeyCode for a specific binding_name on an action.
 
-    iasy.get_last_binding_type()
-    Returns the last binding_name input type (i.e.: gamepad, keyboard, mobile). 
+    > iasy.get_last_binding_type()
+    Returns the last binding_name input type (i.e.: gamepad, keyboard, mobile). Uses UserInputType under the hood.
     Should ONLY be used with default binding_name config.
 	
-    iasy.wait_for_rebind(iasy.schema.core.sprint)
-    YIELDS for the next valid input press. Should ONLY be used with default binding_name config
+    > iasy.wait_for_rebind(iasy.schema.core.sprint)
+    YIELDS for the next valid input press. Should ONLY be used with default binding_name config.
     Returns {binding_name: binding_name, keycode: Enum.KeyCode}. Times out after 5 seconds, returning nil
+	NB: this returns which binding was changed (ex: gamepad binding changed to ButtonR2, for example)
+	In most cases, you shouldn't need to use the return, and only need to check if it is non-nil, unless you want custom IAS hints.
 
-	iasy.set_action_ui_button(sprint_action, ui_button, true)
+	> iasy.set_action_ui_button(sprint_action, ui_button, true)
 	Sets InputAction.UIButton. Last parameter is optional and subscribes the button for auto-hiding/showing (for touch-screens)
+	Will fail if you try and set this on an InputAction whose Type is not Enum.InputActionType.Bool
 --]]
 
 
 -- you can just set this to {[string]: Enum.KeyCode} if you think your binding_names will be inconsistent
--- otherwise, hint each known binding_name as "Enum.KeyCode?"
--- NB: certain functions expect this binding schema! See above for which ones cannot be used if you set a custom one.
+-- otherwise, hint each known binding_name as "Enum.KeyCode?". Note that changing this will invalidate the use of some API functions; see above.
 export type binding_schema = {keyboard: Enum.KeyCode?, gamepad: Enum.KeyCode?, mobile: Enum.KeyCode?}
 
 -- can be set to string for the same reasons as above; using new type solver, you could do keyof<binding_schema>
@@ -51,21 +56,17 @@ export type binding_name = "keyboard" | "gamepad" | "mobile"
 
 export type action_schema = {type: Enum.InputActionType, bindings: binding_schema, enabled: boolean?}; export type context_schema = {[string]: InputAction}; export type input_schema = {[string]: context_schema}
 local function _create_binding(name: string, keycode: Enum.KeyCode?): InputBinding local b = Instance.new("InputBinding"); b.Name = name; b.KeyCode = keycode or Enum.KeyCode.Unknown; return b end
-local function _create_action(schema: action_schema): InputAction local a = Instance.new("InputAction"); a.Type = schema.type; if schema.enabled == nil then a.Enabled = true else a.Enabled = schema.enabled end; local has_mobile_binding = false; for name: any, keycode: any in schema.bindings do if name == "mobile" then has_mobile_binding = true end; _create_binding(name, keycode).Parent=a end; if not has_mobile_binding then _create_binding("mobile",Enum.KeyCode.Unknown).Parent=a end; return a end
+local function _create_action(schema: action_schema): InputAction local a = Instance.new("InputAction"); a.Type = schema.type; if schema.enabled == nil then a.Enabled = true else a.Enabled = schema.enabled end; local has_mobile_binding = false; for name: any, keycode: any in schema.bindings do if name == "mobile" then has_mobile_binding = true end; _create_binding(name, keycode).Parent=a end; if not has_mobile_binding and schema.type == Enum.InputActionType.Bool then _create_binding("mobile", Enum.KeyCode.Unknown).Parent=a end; return a end
 
 local schema = {
 	-- contexts - must have at least 1 action in them
 	core = {
 		-- actions - you can leave bindings entirely empty, or just specific bindings, or add new ones
-		-- a mobile binding is automatically created with Enum.KeyCode.Unknown
-		sprint = _create_action {
+		-- a mobile binding is automatically created with Enum.KeyCode.Unknown if type = Enum.InputActionType.Bool
+		shift_lock = _create_action {
 			type = Enum.InputActionType.Bool,
-			bindings = {keyboard = Enum.KeyCode.LeftShift, gamepad = Enum.KeyCode.ButtonR2}
+			bindings = {gamepad = Enum.KeyCode.ButtonR2}
 		},
-		mouse_trail = _create_action {
-			type =  Enum.InputActionType.ViewportPosition,
-			bindings = {}
-		}
 	}
 }
 
@@ -225,4 +226,3 @@ return {
 	_create_action = _create_action,
 	_create_context = _create_context
 }
-
